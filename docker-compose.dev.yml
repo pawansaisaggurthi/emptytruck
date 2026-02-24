@@ -1,0 +1,56 @@
+version: "3.9"
+
+# Local development overrides — run with:
+# docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  mongo:
+    ports:
+      - "27017:27017"  # Expose for local tools (Compass, Studio3T)
+    environment:
+      MONGO_INITDB_ROOT_PASSWORD: devpassword
+
+  redis:
+    ports:
+      - "6379:6379"
+    environment:
+      # Simpler password for dev
+    command: redis-server --requirepass devpassword --loglevel debug
+
+  backend:
+    build:
+      target: development
+    environment:
+      NODE_ENV: development
+      MONGODB_URI: mongodb://admin:devpassword@mongo:27017/emptytruck?authSource=admin
+      REDIS_URL: redis://:devpassword@redis:6379
+      JWT_SECRET: dev-jwt-secret-change-in-production
+      JWT_REFRESH_SECRET: dev-refresh-secret-change-in-production
+      LOG_LEVEL: debug
+      SMTP_USER: test@example.com
+      SMTP_PASS: testpassword
+      FRONTEND_URL: http://localhost:3000
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173
+    volumes:
+      - ./backend/src:/app/src  # Hot reload
+      - ./backend/package.json:/app/package.json
+    ports:
+      - "5000:5000"
+      - "9229:9229"  # Node.js debugger
+    command: npm run dev
+
+  frontend:
+    build:
+      target: development
+    environment:
+      VITE_API_URL: http://localhost:5000/api
+      VITE_SOCKET_URL: http://localhost:5000
+    volumes:
+      - ./frontend/src:/app/src  # Hot reload
+    ports:
+      - "5173:5173"
+    command: npm run dev -- --host
+
+  nginx:
+    # Skip nginx in dev; access services directly
+    profiles: ["nginx-dev"]

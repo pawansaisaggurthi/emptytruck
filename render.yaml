@@ -1,0 +1,95 @@
+# render.yaml — EmptyTruck Connect
+# Deploy with: Connect repo to render.com and select this file
+
+services:
+  # ── BACKEND API ──────────────────────────────────────────────────────────────
+  - type: web
+    name: emptytruck-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerCommand: node src/server.js
+    dockerContext: ./backend
+    healthCheckPath: /health
+    plan: starter
+    scaling:
+      minInstances: 1
+      maxInstances: 3
+      targetMemoryPercent: 80
+      targetCPUPercent: 80
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        fromDatabase:
+          name: emptytruck-mongo
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: emptytruck-redis
+          type: redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        fromService:
+          name: emptytruck-frontend
+          type: web
+          property: host
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: FCM_SERVER_KEY
+        sync: false
+
+  # ── FRONTEND ─────────────────────────────────────────────────────────────────
+  - type: web
+    name: emptytruck-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    plan: starter
+    buildArgs:
+      - key: VITE_API_URL
+        value: https://emptytruck-backend.onrender.com/api
+      - key: VITE_SOCKET_URL
+        value: https://emptytruck-backend.onrender.com
+      - key: VITE_RAZORPAY_KEY_ID
+        sync: false
+
+  # ── BACKGROUND WORKER ─────────────────────────────────────────────────────────
+  - type: worker
+    name: emptytruck-worker
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerCommand: node src/workers/index.js
+    dockerContext: ./backend
+    plan: starter
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - fromGroup: backend-shared
+
+databases:
+  - name: emptytruck-mongo
+    databaseName: emptytruck
+    plan: starter
+
+  - name: emptytruck-redis
+    type: redis
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
