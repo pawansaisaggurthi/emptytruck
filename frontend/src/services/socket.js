@@ -9,7 +9,7 @@ class SocketService {
   connect(token) {
     if (this.socket?.connected) return;
 
-    this.socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000', {
+    this.socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
       auth: { token },
       transports: ['websocket', 'polling'],
       reconnection: true,
