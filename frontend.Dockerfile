@@ -5,7 +5,9 @@ WORKDIR /app
 COPY frontend/package.json ./
 RUN npm install
 
-COPY frontend/ .
+COPY frontend/index.html ./index.html
+COPY frontend/vite.config.js ./vite.config.js
+COPY frontend/src ./src
 
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
