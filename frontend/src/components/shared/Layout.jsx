@@ -162,7 +162,7 @@ export default function Layout({ role }) {
 
         {/* Navigation */}
         <nav style={{ flex: 1, padding: '8px 12px', overflowY: 'auto' }}>
-          <div style={{ marginBottom: '4px', padding: '0 8px', fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '8px' }}>
+          <div style={{ marginBottom: '4px', padding: '0 8px', fontSize: '0.65rem', color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase'}}>
             Navigation
           </div>
           {items.map((item) => (
