@@ -20,10 +20,7 @@ const validate = (req, res, next) => {
 router.post('/', protect, authorize('customer'), [
   body('tripId').notEmpty(),
   body('pickup.address').notEmpty(),
-  body('pickup.location.coordinates').isArray({ min: 2 }),
   body('dropoff.address').notEmpty(),
-  body('dropoff.location.coordinates').isArray({ min: 2 }),
-  body('scheduledDate').isISO8601(),
   body('goodsType').notEmpty()
 ], validate, async (req, res) => {
   try {
@@ -37,6 +34,14 @@ router.post('/', protect, authorize('customer'), [
 
     // Check if customer already has a pending booking for this trip
     const existing = await Booking.findOne({ trip: tripId, customer: req.user._id, status: 'pending' });
+    // Use trip coords as fallback if not provided
+if (!pickup.location?.coordinates) {
+  pickup.location = trip.origin.location;
+}
+if (!dropoff.location?.coordinates) {
+  dropoff.location = trip.destination.location;
+}
+const finalScheduledDate = scheduledDate || trip.availableDate;
     if (existing) {
       return res.status(400).json({ success: false, message: 'You already have a pending request for this trip' });
     }
@@ -65,7 +70,7 @@ router.post('/', protect, authorize('customer'), [
       customer: req.user._id,
       pickup,
       dropoff,
-      scheduledDate,
+      finalScheduledDate,
       goodsType,
       goodsWeight,
       goodsDescription,
