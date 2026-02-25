@@ -34,17 +34,20 @@ router.post('/', protect, authorize('customer'), [
 
     // Check if customer already has a pending booking for this trip
     const existing = await Booking.findOne({ trip: tripId, customer: req.user._id, status: 'pending' });
-    // Use trip coords as fallback if not provided
-if (!pickup.location?.coordinates) {
-  pickup.location = trip.origin.location;
-}
-if (!dropoff.location?.coordinates) {
-  dropoff.location = trip.destination.location;
-}
-const finalScheduledDate = scheduledDate || trip.availableDate;
     if (existing) {
       return res.status(400).json({ success: false, message: 'You already have a pending request for this trip' });
     }
+
+    // Use provided coordinates or fall back to trip's origin/destination
+    if (!pickup.location?.coordinates) {
+      pickup.location = trip.origin.location;
+    }
+    if (!dropoff.location?.coordinates) {
+      dropoff.location = trip.destination.location;
+    }
+
+    // Use trip's available date if scheduledDate not provided
+    const finalScheduledDate = scheduledDate || trip.availableDate;
 
     // Calculate distance and price
     const [pickupLng, pickupLat] = pickup.location.coordinates;
@@ -70,7 +73,7 @@ const finalScheduledDate = scheduledDate || trip.availableDate;
       customer: req.user._id,
       pickup,
       dropoff,
-      finalScheduledDate,
+      scheduledDate: finalScheduledDate,
       goodsType,
       goodsWeight,
       goodsDescription,
