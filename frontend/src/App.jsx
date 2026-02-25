@@ -53,6 +53,8 @@ const queryClient = new QueryClient({
 function App() {
   const { initialize, isInitialized } = useAuthStore();
 
+  console.log("new", new Date())
+
   useEffect(() => {
     initialize();
   }, [initialize]);
