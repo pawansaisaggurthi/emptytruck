@@ -1,66 +1,153 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import LandingPage from './pages/LandingPage'
-import LoginPage from './pages/auth/LoginPage'
-import { useAuthStore } from './store/authStore'
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useAuthStore } from './store/authStore';
 
-const Dashboard = () => {
-  const { user, logout } = useAuthStore()
-  return (
-    <div style={{ padding: '40px', fontFamily: 'sans-serif', background: '#0D0F14', minHeight: '100vh', color: 'white' }}>
-      <div style={{ maxWidth: 800, margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-          <h1 style={{ color: '#F97316', fontSize: '1.8rem' }}>🚛 EmptyTruck Connect</h1>
-          <button onClick={logout} style={{ background: '#EF4444', color: 'white', border: 'none', padding: '8px 16px', borderRadius: 8, cursor: 'pointer', fontWeight: 700 }}>Logout</button>
-        </div>
-        <div style={{ background: '#1E2230', borderRadius: 16, padding: 24, marginBottom: 20, border: '1px solid #2A3045' }}>
-          <h2 style={{ marginBottom: 16, color: '#F0F4FF' }}>Welcome, {user?.name}! 👋</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-            {[{label:'Email',value:user?.email},{label:'Role',value:user?.role?.toUpperCase()},{label:'Phone',value:user?.phone},{label:'Rating',value:user?.averageRating||'N/A'}].map(({label,value})=>(
-              <div key={label} style={{ background: '#2C3345', borderRadius: 10, padding: 14 }}>
-                <div style={{ color: '#5A6480', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
-                <div style={{ color: '#F0F4FF', fontWeight: 600 }}>{value}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-          {[{icon:'🗺️',title:'Find Trucks',desc:'Search available trucks'},{icon:'📦',title:'My Bookings',desc:'View and manage bookings'},{icon:'💬',title:'Messages',desc:'Chat with drivers'},{icon:'⭐',title:'Ratings',desc:'View your reviews'},{icon:'💳',title:'Payments',desc:'Manage payments'},{icon:'⚙️',title:'Settings',desc:'Account settings'}].map(({icon,title,desc})=>(
-            <div key={title} style={{ background: '#1E2230', border: '1px solid #2A3045', borderRadius: 12, padding: 16, cursor: 'pointer' }}>
-              <div style={{ fontSize: '1.5rem', marginBottom: 8 }}>{icon}</div>
-              <div style={{ fontWeight: 700, marginBottom: 4 }}>{title}</div>
-              <div style={{ color: '#5A6480', fontSize: '0.75rem' }}>{desc}</div>
-            </div>
-          ))}
-        </div>
-        <div style={{ marginTop: 20, background: '#1E2230', borderRadius: 12, padding: 16, border: '1px solid rgba(249,115,22,0.3)' }}>
-          <div style={{ color: '#F97316', fontWeight: 700, marginBottom: 8 }}>🚀 System Status</div>
-          <div style={{ color: '#10B981', fontSize: '0.85rem' }}>✅ Backend API — Online</div>
-          <div style={{ color: '#10B981', fontSize: '0.85rem' }}>✅ MongoDB — Connected</div>
-          <div style={{ color: '#10B981', fontSize: '0.85rem' }}>✅ Authentication — Working</div>
-        </div>
-      </div>
-    </div>
-  )
-}
+// Pages - Auth
+import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 
-const ProtectedRoute = ({ children }) => {
-  const { token } = useAuthStore()
-  return token ? children : <Navigate to="/login" />
-}
+// Pages - Driver
+import DriverDashboard from './pages/driver/DriverDashboard';
+import DriverProfile from './pages/driver/DriverProfile';
+import PostTrip from './pages/driver/PostTrip';
+import DriverBookings from './pages/driver/DriverBookings';
+import DriverOnboarding from './pages/driver/DriverOnboarding';
+
+// Pages - Customer
+import CustomerDashboard from './pages/customer/CustomerDashboard';
+import SearchTrips from './pages/customer/SearchTrips';
+import CustomerBookings from './pages/customer/CustomerBookings';
+import DriverDetail from './pages/customer/DriverDetail';
+
+// Pages - Admin
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminDrivers from './pages/admin/AdminDrivers';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminBookings from './pages/admin/AdminBookings';
+import AdminSettings from './pages/admin/AdminSettings';
+
+// Pages - Shared
+import ChatPage from './pages/shared/ChatPage';
+import NotificationsPage from './pages/shared/NotificationsPage';
+import ProfileSettings from './pages/shared/ProfileSettings';
+import BookingDetail from './pages/shared/BookingDetail';
+import LandingPage from './pages/LandingPage';
+import NotFound from './pages/NotFound';
+
+// Components
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import Layout from './components/shared/Layout';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1
+    }
+  }
+});
 
 function App() {
+  const { initialize, isInitialized } = useAuthStore();
+
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
+  if (!isInitialized) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-truck">🚛</div>
+        <div className="loading-text">Loading EmptyTruck...</div>
+      </div>
+    );
+  }
+
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/admin/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/driver/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/customer/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </BrowserRouter>
-  )
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#1a1a2e',
+              color: '#e2e8f0',
+              border: '1px solid #2d3748',
+              borderRadius: '12px',
+              fontFamily: "'Syne', sans-serif"
+            },
+            success: { iconTheme: { primary: '#10B981', secondary: '#fff' } },
+            error: { iconTheme: { primary: '#EF4444', secondary: '#fff' } }
+          }}
+        />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+          {/* Driver Routes */}
+          <Route path="/driver" element={
+            <ProtectedRoute role="driver">
+              <Layout role="driver" />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Navigate to="/driver/dashboard" replace />} />
+            <Route path="dashboard" element={<DriverDashboard />} />
+            <Route path="onboarding" element={<DriverOnboarding />} />
+            <Route path="profile" element={<DriverProfile />} />
+            <Route path="post-trip" element={<PostTrip />} />
+            <Route path="bookings" element={<DriverBookings />} />
+            <Route path="bookings/:id" element={<BookingDetail />} />
+            <Route path="chat" element={<ChatPage />} />
+            <Route path="chat/:chatId" element={<ChatPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="settings" element={<ProfileSettings />} />
+          </Route>
+
+          {/* Customer Routes */}
+          <Route path="/customer" element={
+            <ProtectedRoute role="customer">
+              <Layout role="customer" />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Navigate to="/customer/dashboard" replace />} />
+            <Route path="dashboard" element={<CustomerDashboard />} />
+            <Route path="search" element={<SearchTrips />} />
+            <Route path="driver/:id" element={<DriverDetail />} />
+            <Route path="bookings" element={<CustomerBookings />} />
+            <Route path="bookings/:id" element={<BookingDetail />} />
+            <Route path="chat" element={<ChatPage />} />
+            <Route path="chat/:chatId" element={<ChatPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="settings" element={<ProfileSettings />} />
+          </Route>
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={
+            <ProtectedRoute role="admin">
+              <Layout role="admin" />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="drivers" element={<AdminDrivers />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="bookings" element={<AdminBookings />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
+
+          {/* 404 */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Router>
+    </QueryClientProvider>
+  );
 }
 
-export default App
+export default App;
