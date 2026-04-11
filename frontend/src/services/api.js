@@ -2,7 +2,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const api = axios.create({
-  baseURL: 'https://emptytruck-production.up.railway.app/api',
+baseURL: 'https://emptytruck-backend.onrender.com/api',
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' }
 });

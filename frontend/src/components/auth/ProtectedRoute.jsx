@@ -10,7 +10,7 @@ const ProtectedRoute = ({ children, role }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (role && user?.role !== role) {
+  if (role && user?.role !== role) {  
     // Redirect to correct dashboard
     const redirectMap = {
       driver: '/driver/dashboard',
