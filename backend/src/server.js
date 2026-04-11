@@ -79,6 +79,9 @@ app.use('/api/payments', require('./routes/payments'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/notifications', require('./routes/notifications'));
 
+const documentRoutes = require('./routes/documents');
+app.use('/api/documents', documentRoutes);
+
 // Health Check
 app.get('/health', (req, res) => {
   res.json({ 
